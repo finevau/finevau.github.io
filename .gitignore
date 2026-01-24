@@ -1,2 +1,8 @@
 .DS_store
 .idea
+.venv
+convert_to_parquet.py
+www_dataset.jsonl
+IMPLEMENTATION_GUIDE.md
+upload_to_hf.py
+finevau_eval
