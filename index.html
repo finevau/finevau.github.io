@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="utf-8">
+  <meta name="description" content="FineVAU: A Novel Human-Aligned Benchmark for Fine-Grained Video Anomaly Understanding with FV-Score metric and FineW3 dataset.">
+  <meta name="keywords" content="FineVAU, Video Anomaly Understanding, LVLM, FV-Score, FineW3, AAAI 2026">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FineVAU: Fine-Grained Video Anomaly Understanding</title>
+
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-PYVRSFMDRL"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', 'G-PYVRSFMDRL');
+  </script>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: { 50: '#eff6ff', 100: '#dbeafe', 200: '#bfdbfe', 300: '#93c5fd', 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8', 800: '#1e40af', 900: '#1e3a8a' },
+            surface: { 50: '#f8fafc', 100: '#f1f5f9', 200: '#e2e8f0', 800: '#1e293b', 900: '#0f172a' }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <!-- Academicons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+
+  <!-- Disable favicon -->
+  <link rel="icon" href="data:,">
+
+  <style>
+    body { font-family: 'Inter', system-ui, sans-serif; }
+    .gradient-text { background: linear-gradient(135deg, #3b82f6, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .card-hover { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+    .card-hover:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(0,0,0,0.12); }
+    .tab-active { border-bottom: 2px solid #3b82f6; color: #3b82f6; font-weight: 600; }
+    .tab-inactive { border-bottom: 2px solid transparent; color: #64748b; }
+    .tab-inactive:hover { color: #334155; border-bottom-color: #e2e8f0; }
+    .video-container { border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
+    .score-bar { height: 6px; border-radius: 3px; transition: width 0.8s ease; }
+    .accordion-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
+    .accordion-content.open { max-height: 600px; }
+    .event-card { transition: all 0.2s ease; }
+    #timeline-bar { position: relative; }
+    .carousel-item { scroll-snap-align: start; flex-shrink: 0; }
+    .carousel-container { scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; }
+    .highlight-keyword { background: linear-gradient(180deg, transparent 60%, #fde047 60%); padding: 0 2px; }
+    .badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 9999px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+    .nav-blur { backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .animate-in { animation: fadeIn 0.5s ease forwards; }
+    .metric-card { transition: all 0.2s ease; }
+    .metric-card:hover { border-color: #3b82f6; }
+    table th.sortable { cursor: pointer; user-select: none; }
+    table th.sortable:hover { background-color: #f1f5f9; }
+    th .sort-arrow { opacity: 0.3; margin-left: 4px; }
+    th.sort-active .sort-arrow { opacity: 1; }
+  </style>
+</head>
+<body class="bg-white text-slate-800 antialiased">
+
+<!-- Navigation -->
+<nav class="fixed top-0 w-full z-50 nav-blur bg-white/80 border-b border-slate-200/50">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6">
+    <div class="flex items-center justify-between h-16">
+      <a href="#" class="text-lg font-bold gradient-text">FineVAU</a>
+      <div class="hidden md:flex items-center gap-8">
+        <a href="#showdown" class="text-sm text-slate-600 hover:text-slate-900 transition">Evaluation</a>
+        <a href="#dataset" class="text-sm text-slate-600 hover:text-slate-900 transition">Dataset</a>
+        <a href="#leaderboard" class="text-sm text-slate-600 hover:text-slate-900 transition">Leaderboard</a>
+        <a href="#related" class="text-sm text-slate-600 hover:text-slate-900 transition">Related</a>
+      </div>
+      <button id="mobile-menu-btn" class="md:hidden p-2 rounded-lg hover:bg-slate-100">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+    </div>
+  </div>
+  <div id="mobile-menu" class="hidden md:hidden border-t border-slate-200 bg-white">
+    <div class="px-4 py-3 space-y-2">
+      <a href="#showdown" class="block text-sm text-slate-600 py-1">Evaluation</a>
+      <a href="#dataset" class="block text-sm text-slate-600 py-1">Dataset</a>
+      <a href="#leaderboard" class="block text-sm text-slate-600 py-1">Leaderboard</a>
+      <a href="#related" class="block text-sm text-slate-600 py-1">Related</a>
+    </div>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="pt-28 pb-16 px-4">
+  <div class="max-w-4xl mx-auto text-center">
+    <div class="inline-flex items-center gap-2 mb-6 px-4 py-1.5 bg-blue-50 rounded-full">
+      <span class="badge bg-blue-600 text-white">AAAI 2026</span>
+      <span class="text-sm text-blue-700 font-medium">Accepted Paper</span>
+    </div>
+    <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-slate-900 mb-6">
+      <span class="gradient-text">FineVAU:</span> A Human-Aligned Benchmark for Video Anomaly Understanding
+    </h1>
+    <p class="text-lg text-slate-500 max-w-2xl mx-auto mb-8">
+      Current evaluation metrics lack the granularity to assess whether models truly understand what they see. We decompose anomaly understanding into <strong class="text-slate-700">What</strong> happened, <strong class="text-slate-700">Who</strong> was involved, and <strong class="text-slate-700">Where</strong> it occurred &mdash; and propose FV-Score, the first metric that penalizes models for missing what matters.
+    </p>
+
+    <!-- Authors -->
+    <div class="flex flex-wrap justify-center gap-x-6 gap-y-1 text-sm text-slate-600 mb-4">
+      <span><a href="https://scholar.google.pt/citations?user=37YRVtAAAAAJ" target="_blank" rel="noopener noreferrer" class="hover:text-blue-600 transition">Jo&atilde;o Pereira</a><sup class="text-xs text-slate-400">1,2,4</sup></span>
+      <span><a href="https://scholar.google.pt/citations?user=bvYBcRkAAAAJ" target="_blank" rel="noopener noreferrer" class="hover:text-blue-600 transition">Vasco Lopes</a><sup class="text-xs text-slate-400">1,2,3</sup></span>
+      <span><a href="https://scholar.google.pt/citations?user=U1cK384AAAAJ" target="_blank" rel="noopener noreferrer" class="hover:text-blue-600 transition">Jo&atilde;o Neves</a><sup class="text-xs text-slate-400">1,3</sup></span>
+      <span><a href="https://scholar.google.pt/citations?user=O8mUEM8AAAAJ" target="_blank" rel="noopener noreferrer" class="hover:text-blue-600 transition">David Semedo</a><sup class="text-xs text-slate-400">1,4</sup></span>
+    </div>
+    <div class="flex flex-wrap justify-center gap-x-4 gap-y-1 text-xs text-slate-400 mb-8">
+      <span><sup>1</sup>NOVA LINCS</span>
+      <span><sup>2</sup>DeepNeuronic</span>
+      <span><sup>3</sup>Univ. Beira Interior</span>
+      <span><sup>4</sup>FCT NOVA</span>
+    </div>
+
+    <!-- Links -->
+    <div class="flex flex-wrap justify-center gap-3">
+      <a href="https://arxiv.org/abs/2601.17258" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-900 text-white rounded-lg text-sm font-medium hover:bg-slate-700 transition">
+        <i class="ai ai-arxiv text-base"></i> arXiv
+      </a>
+      <a href="https://ojs.aaai.org/index.php/AAAI/article/download/37790/41752" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-900 text-white rounded-lg text-sm font-medium hover:bg-slate-700 transition">
+        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"/></svg> Paper
+      </a>
+      <a href="https://huggingface.co/datasets/jaca-pereira/FineW3" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-900 text-white rounded-lg text-sm font-medium hover:bg-slate-700 transition">
+        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/></svg> Dataset
+      </a>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     SHOWDOWN: Coarse vs. Fine-Grained Evaluation (scroll progression)
+     ═══════════════════════════════════════════════════════════════════ -->
+<section id="showdown" class="py-20 px-4">
+  <div class="max-w-6xl mx-auto">
+    <div class="text-center mb-12">
+      <h2 class="text-3xl font-bold mb-3">Why Traditional Metrics Fail</h2>
+      <p class="text-slate-500">Existing metrics focus on lexical overlap or language quality, not on whether the model captured the actual anomaly.</p>
+    </div>
+
+    <!-- Step 1: The Setup — Video + LVLM Response -->
+    <div class="grid lg:grid-cols-2 gap-8 items-start mb-16">
+      <div>
+        <div class="video-container">
+          <video id="showdown-video" controls muted loop playsinline class="w-full">
+            <source src="./static/videos/Robbery088_x264.mp4" type="video/mp4">
+          </video>
+        </div>
+        <div class="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+          <p class="text-sm font-semibold text-amber-800 mb-1">LVLM Generated Response:</p>
+          <p class="text-sm text-amber-700 italic">"A person approaches a residential property and enters through a door. Two individuals are present in the scene and appear to be engaged in some form of physical interaction near the entrance. One person is seen moving around the property, and there are objects visible including a door and window. The scene takes place at a residential location during what appears to be daytime."</p>
+        </div>
+      </div>
+
+      <!-- Step 2: The Problem — Traditional Metrics -->
+      <div>
+        <div class="flex items-center gap-3 mb-4">
+          <span class="badge bg-red-100 text-red-700">The Problem</span>
+          <span class="text-sm font-semibold text-slate-700">These metrics say the response is acceptable</span>
+        </div>
+
+        <div class="p-5 bg-red-50 border border-red-100 rounded-xl mb-4">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="text-sm font-semibold text-red-800">Keyword overlap creates a false sense of accuracy</span>
+          </div>
+          <div class="space-y-3 text-sm">
+            <div>
+              <p class="font-medium text-slate-700 mb-1">Reference (Ground Truth):</p>
+              <p class="text-slate-600">"A man climbs over a <span class="highlight-keyword">wall</span> and enters a <span class="highlight-keyword">residential</span> <span class="highlight-keyword">property</span> through a small <span class="highlight-keyword">door</span>. The homeowner confronts the intruder. The robber stabs the defender multiple times with a knife. The defender fights back using an iron rod. The robber escapes by jumping through a <span class="highlight-keyword">window</span>."</p>
+            </div>
+            <div>
+              <p class="font-medium text-slate-700 mb-1">LVLM Response:</p>
+              <p class="text-slate-600">"A person approaches a <span class="highlight-keyword">residential</span> <span class="highlight-keyword">property</span> and enters through a <span class="highlight-keyword">door</span>. Two individuals are present in the scene and appear to be engaged in some form of physical interaction near the entrance. One person is seen moving around the <span class="highlight-keyword">property</span>, and there are objects visible including a <span class="highlight-keyword">door</span> and <span class="highlight-keyword">window</span>. The scene takes place at a residential location during what appears to be daytime."</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div class="metric-card p-4 border border-slate-200 rounded-xl">
+            <p class="text-xs text-slate-400 uppercase tracking-wide">ROUGE-L</p>
+            <p class="text-2xl font-bold text-slate-900">0.22</p>
+            <div class="mt-2 w-full bg-slate-100 rounded-full"><div class="score-bar bg-orange-400" style="width:22%"></div></div>
+            <p class="text-xs text-slate-500 mt-2">Measures longest common subsequence between response and reference. Shared words like "door" and "property" inflate the score, despite completely missing the anomaly.</p>
+          </div>
+          <div class="metric-card p-4 border border-slate-200 rounded-xl">
+            <p class="text-xs text-slate-400 uppercase tracking-wide">BLEU</p>
+            <p class="text-2xl font-bold text-slate-900">0.15</p>
+            <div class="mt-2 w-full bg-slate-100 rounded-full"><div class="score-bar bg-red-400" style="width:15%"></div></div>
+            <p class="text-xs text-slate-500 mt-2">N-gram precision against the reference. Low score, but provides no diagnostic &mdash; is it wrong about the events, the entities, or the scene? No way to tell.</p>
+          </div>
+          <div class="metric-card p-4 border border-slate-200 rounded-xl">
+            <p class="text-xs text-slate-400 uppercase tracking-wide">VAU-EVAL</p>
+            <p class="text-2xl font-bold text-slate-900">6.8<span class="text-sm text-slate-400">/10</span></p>
+            <div class="mt-2 w-full bg-slate-100 rounded-full"><div class="score-bar bg-yellow-400" style="width:68%"></div></div>
+            <p class="text-xs text-slate-500 mt-2">LLM judge scoring fluency, informativeness, key concepts, and factual consistency. Holistic criteria lack the granularity to pinpoint which anomaly-specific visual elements are missing.</p>
+          </div>
+          <div class="metric-card p-4 border border-slate-200 rounded-xl">
+            <p class="text-xs text-slate-400 uppercase tracking-wide">AnomEVAL</p>
+            <p class="text-2xl font-bold text-slate-900">6.1<span class="text-sm text-slate-400">/10</span></p>
+            <div class="mt-2 w-full bg-slate-100 rounded-full"><div class="score-bar bg-orange-300" style="width:61%"></div></div>
+            <p class="text-xs text-slate-500 mt-2">Evaluates causal reasoning &mdash; cause and result of anomalies. But the response <em>omits</em> rather than fabricates, so the hallucination check passes while critical violence is never mentioned.</p>
+          </div>
+        </div>
+        <p class="mt-4 text-xs text-red-600 font-medium text-center">A human rates this response 2/10. These metrics range from 0.15 to 6.8 &mdash; none explain <em>why</em> the response fails.</p>
+      </div>
+    </div>
+
+    <!-- Divider with arrow -->
+    <div class="flex items-center justify-center mb-16">
+      <div class="h-px bg-slate-200 flex-1"></div>
+      <div class="mx-6 flex flex-col items-center">
+        <svg class="w-6 h-6 text-blue-500 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg>
+      </div>
+      <div class="h-px bg-slate-200 flex-1"></div>
+    </div>
+
+    <!-- Step 3: The Solution — FV-Score -->
+    <div class="max-w-4xl mx-auto">
+      <div class="flex items-center gap-3 mb-6">
+        <span class="badge bg-blue-600 text-white">The Solution</span>
+        <span class="text-sm font-semibold text-slate-700">FV-Score evaluates structural understanding, not surface overlap</span>
+      </div>
+
+      <div class="p-5 bg-blue-50 border border-blue-100 rounded-xl mb-6">
+        <div class="flex items-center justify-between mb-2">
+          <div class="flex items-center gap-3">
+            <span class="text-xl font-bold gradient-text">FV-Score</span>
+            <span class="text-xs text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full">Human alignment: &rho; = 0.61</span>
+          </div>
+          <span class="text-2xl font-bold text-blue-800">3.5 <span class="text-sm font-normal text-blue-500">/ 15</span></span>
+        </div>
+        <p class="text-sm text-blue-700">Correctly identifies this as a catastrophic failure (Human rating: 2/10)</p>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-4">
+        <!-- What -->
+        <div class="p-4 border border-slate-200 rounded-xl bg-white">
+          <div class="flex items-center justify-between mb-3">
+            <h4 class="font-semibold text-slate-800 flex items-center gap-2">
+              <span class="w-6 h-6 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-bold">W</span>
+              What
+            </h4>
+            <span class="text-sm font-bold text-red-600">0.5/5</span>
+          </div>
+          <ul class="text-sm text-slate-600 space-y-1.5">
+            <li class="flex items-start gap-1"><span class="text-red-500 mt-0.5">&#10007;</span> Climbing wall to break in</li>
+            <li class="flex items-start gap-1"><span class="text-red-500 mt-0.5">&#10007;</span> Stabbing with knife</li>
+            <li class="flex items-start gap-1"><span class="text-red-500 mt-0.5">&#10007;</span> Fighting with iron rod</li>
+            <li class="flex items-start gap-1"><span class="text-red-500 mt-0.5">&#10007;</span> Escape through window</li>
+            <li class="flex items-start gap-1"><span class="text-amber-500 mt-0.5">&#9888;</span> "physical interaction" for assault</li>
+          </ul>
+        </div>
+
+        <!-- Who -->
+        <div class="p-4 border border-slate-200 rounded-xl bg-white">
+          <div class="flex items-center justify-between mb-3">
+            <h4 class="font-semibold text-slate-800 flex items-center gap-2">
+              <span class="w-6 h-6 rounded-full bg-green-100 text-green-700 flex items-center justify-center text-xs font-bold">W</span>
+              Who
+            </h4>
+            <span class="text-sm font-bold text-red-600">1/6</span>
+          </div>
+          <ul class="text-sm text-slate-600 space-y-1.5">
+            <li class="flex items-start gap-1"><span class="text-amber-500 mt-0.5">&#9888;</span> Two individuals (no roles)</li>
+            <li class="flex items-start gap-1"><span class="text-red-500 mt-0.5">&#10007;</span> Robber vs. Defender</li>
+            <li class="flex items-start gap-1"><span class="text-red-500 mt-0.5">&#10007;</span> Knife and iron rod</li>
+          </ul>
+        </div>
+
+        <!-- Where -->
+        <div class="p-4 border border-slate-200 rounded-xl bg-white">
+          <div class="flex items-center justify-between mb-3">
+            <h4 class="font-semibold text-slate-800 flex items-center gap-2">
+              <span class="w-6 h-6 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center text-xs font-bold">W</span>
+              Where
+            </h4>
+            <span class="text-sm font-bold text-green-600">2/4</span>
+          </div>
+          <ul class="text-sm text-slate-600 space-y-1.5">
+            <li class="flex items-start gap-1"><span class="text-green-500 mt-0.5">&#10003;</span> Residential property</li>
+            <li class="flex items-start gap-1"><span class="text-green-500 mt-0.5">&#10003;</span> Door and window</li>
+            <li class="flex items-start gap-1"><span class="text-red-500 mt-0.5">&#10007;</span> Wall, small door specs</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="mt-6 p-4 bg-green-50 border border-green-200 rounded-xl">
+        <p class="text-sm text-green-800"><strong>Actionable insight:</strong> FV-Score pinpoints exactly which visual elements were hallucinated or omitted &mdash; the model sanitized a life-threatening stabbing into "physical interaction." Traditional metrics cannot detect this.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     DATASET CAROUSEL
+     ═══════════════════════════════════════════════════════════════════ -->
+<section id="dataset" class="py-20 px-4 bg-slate-50">
+  <div class="max-w-6xl mx-auto">
+    <div class="text-center mb-12">
+      <h2 class="text-3xl font-bold mb-3">FineW3 Dataset</h2>
+      <p class="text-slate-500">1,544 videos with structured What/Who/Where annotations. Select a clip to explore its ground-truth events.</p>
+    </div>
+
+    <!-- Carousel Thumbnails -->
+    <div class="flex gap-4 overflow-x-auto pb-4 carousel-container mb-8">
+      <button onclick="selectDatasetClip(0)" id="clip-btn-0" class="carousel-item group relative rounded-xl overflow-hidden border-2 border-blue-500 shadow-lg flex-shrink-0 w-56">
+        <video muted loop playsinline class="w-56 h-32 object-cover" src="./static/videos/Shoplifting018_x264.mp4"></video>
+        <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-3">
+          <div>
+            <span class="badge bg-green-500 text-white mb-1">Easy</span>
+            <p class="text-white text-sm font-medium">Shoplifting</p>
+          </div>
+        </div>
+      </button>
+      <button onclick="selectDatasetClip(1)" id="clip-btn-1" class="carousel-item group relative rounded-xl overflow-hidden border-2 border-transparent hover:border-blue-300 transition flex-shrink-0 w-56">
+        <video muted loop playsinline class="w-56 h-32 object-cover" src="./static/videos/Arrest001_x264.mp4"></video>
+        <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-3">
+          <div>
+            <span class="badge bg-green-500 text-white mb-1">Easy</span>
+            <p class="text-white text-sm font-medium">Arrest</p>
+          </div>
+        </div>
+      </button>
+      <button onclick="selectDatasetClip(2)" id="clip-btn-2" class="carousel-item group relative rounded-xl overflow-hidden border-2 border-transparent hover:border-blue-300 transition flex-shrink-0 w-56">
+        <video muted loop playsinline class="w-56 h-32 object-cover" src="./static/videos/Robbery088_x264.mp4"></video>
+        <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-3">
+          <div>
+            <span class="badge bg-red-500 text-white mb-1">Hard</span>
+            <p class="text-white text-sm font-medium">Robbery</p>
+          </div>
+        </div>
+      </button>
+      <button onclick="selectDatasetClip(3)" id="clip-btn-3" class="carousel-item group relative rounded-xl overflow-hidden border-2 border-transparent hover:border-blue-300 transition flex-shrink-0 w-56">
+        <video muted loop playsinline class="w-56 h-32 object-cover" src="./static/videos/Robbery001_x264.mp4"></video>
+        <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-3">
+          <div>
+            <span class="badge bg-red-500 text-white mb-1">Hard</span>
+            <p class="text-white text-sm font-medium">Armed Robbery</p>
+          </div>
+        </div>
+      </button>
+      <button onclick="selectDatasetClip(4)" id="clip-btn-4" class="carousel-item group relative rounded-xl overflow-hidden border-2 border-transparent hover:border-blue-300 transition flex-shrink-0 w-56">
+        <video muted loop playsinline class="w-56 h-32 object-cover" src="./static/videos/Assault004_x264.mp4"></video>
+        <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-3">
+          <div>
+            <span class="badge bg-red-500 text-white mb-1">Hard</span>
+            <p class="text-white text-sm font-medium">Assault</p>
+          </div>
+        </div>
+      </button>
+    </div>
+
+    <!-- Main Display -->
+    <div class="grid lg:grid-cols-2 gap-8" id="dataset-display">
+      <div>
+        <div class="video-container relative">
+          <video id="dataset-main-video" controls muted loop playsinline class="w-full">
+            <source src="./static/videos/Shoplifting018_x264.mp4" type="video/mp4">
+          </video>
+          <!-- Event overlay -->
+          <div id="video-event-overlay" class="absolute bottom-14 left-3 right-3 pointer-events-none transition-all duration-300 opacity-0">
+            <div class="bg-black/80 backdrop-blur-sm rounded-lg px-3 py-2 border border-white/20">
+              <div class="flex items-center gap-2">
+                <span id="overlay-type-badge" class="badge bg-red-500 text-white text-[0.6rem]">ABNORMAL</span>
+                <p id="overlay-event-text" class="text-white text-xs leading-tight"></p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Timeline bar -->
+        <div id="timeline-bar" class="mt-2 relative h-6 bg-slate-100 rounded-full overflow-hidden cursor-pointer" onclick="seekTimeline(event)">
+          <!-- Segments rendered by JS -->
+        </div>
+        <div class="flex justify-between mt-1 text-[0.65rem] text-slate-400">
+          <span id="timeline-current">0:00</span>
+          <span id="timeline-duration">0:00</span>
+        </div>
+      </div>
+      <div id="dataset-annotations" class="space-y-3 max-h-[500px] overflow-y-auto pr-2">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     LEADERBOARD
+     ═══════════════════════════════════════════════════════════════════ -->
+<section id="leaderboard" class="py-20 px-4">
+  <div class="max-w-6xl mx-auto">
+    <div class="text-center mb-12">
+      <h2 class="text-3xl font-bold mb-3">FineVAU Leaderboard</h2>
+      <p class="text-slate-500">Zero-shot evaluation of state-of-the-art LVLMs. Click headers to sort, expand rows for failure analysis.</p>
+    </div>
+
+    <div class="overflow-x-auto rounded-xl border border-slate-200 shadow-sm">
+      <table class="w-full text-sm" id="leaderboard-table">
+        <thead class="bg-slate-50 border-b border-slate-200">
+          <tr>
+            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider w-10">#</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Model</th>
+            <th class="sortable px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100" data-col="all">All <span class="sort-arrow">&#9650;</span></th>
+            <th class="sortable px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100" data-col="event">Event <span class="sort-arrow">&#9650;</span></th>
+            <th class="sortable px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100" data-col="entity">Entity <span class="sort-arrow">&#9650;</span></th>
+            <th class="sortable px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100" data-col="location">Location <span class="sort-arrow">&#9650;</span></th>
+            <th class="sortable px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100" data-col="attribute">Attribute <span class="sort-arrow">&#9650;</span></th>
+            <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider w-10"></th>
+          </tr>
+        </thead>
+        <tbody id="leaderboard-body">
+        </tbody>
+      </table>
+    </div>
+
+    <div class="text-center mt-6">
+      <p class="text-sm text-slate-400">Higher scores indicate better fine-grained understanding. Click any row to see detailed failure analysis.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Related Work -->
+<section id="related" class="py-20 px-4 bg-slate-50">
+  <div class="max-w-3xl mx-auto">
+    <h2 class="text-3xl font-bold text-center mb-8">Related Work</h2>
+    <div class="space-y-4 text-slate-600 leading-relaxed">
+      <p>
+        <strong class="text-slate-800">VAU Datasets and Benchmarks:</strong>
+        <a href="https://openaccess.thecvf.com/content/CVPR2024/html/Yuan_Towards_Surveillance_Video-and-Language_Understanding_New_Dataset_Baselines_and_Challenges_CVPR_2024_paper.html" class="text-blue-600 hover:underline">UCA</a> introduces dense captions for UCF-Crime videos.
+        <a href="https://proceedings.neurips.cc/paper_files/paper/2024/hash/3ef815416f775098fe9df75ac84d597a-Abstract-Conference.html" class="text-blue-600 hover:underline">HAWK</a> proposes synthetic descriptions and QA pairs.
+        <a href="https://openaccess.thecvf.com/content/CVPR2025/html/Zhang_Holmes-VAU_Towards_Long-term_Video_Anomaly_Understanding_at_Any_Granularity_CVPR_2025_paper.html" class="text-blue-600 hover:underline">Holmes-VAU</a> provides multi-granularity annotations.
+        <a href="https://arxiv.org/abs/2412.07183" class="text-blue-600 hover:underline">ECVA</a> introduces causal reasoning annotations.
+      </p>
+      <p>
+        <strong class="text-slate-800">Evaluation Metrics:</strong>
+        Traditional metrics like BLEU and ROUGE-L focus on lexical overlap, while LLM-based metrics like <a href="https://arxiv.org/abs/2412.07183" class="text-blue-600 hover:underline">AnomEVAL</a> and <a href="https://arxiv.org/abs/2505.23504" class="text-blue-600 hover:underline">VAU-EVAL</a> assess reasoning and fluency. FV-Score uniquely focuses on fine-grained visual grounding aligned with human perception.
+      </p>
+      <p>
+        <strong class="text-slate-800">Large Vision-Language Models:</strong>
+        Recent LVLMs like <a href="https://arxiv.org/abs/2504.10479" class="text-blue-600 hover:underline">InternVL3</a>, <a href="https://arxiv.org/abs/2502.13923" class="text-blue-600 hover:underline">Qwen2.5-VL</a>, and <a href="https://arxiv.org/abs/2410.02713" class="text-blue-600 hover:underline">LLaVA-Video</a> show strong generalization on vision tasks. Our benchmark reveals their limitations in fine-grained temporal and spatial understanding of anomalies.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- BibTeX -->
+<section class="py-16 px-4">
+  <div class="max-w-3xl mx-auto">
+    <h2 class="text-2xl font-bold text-center mb-6">Citation</h2>
+    <div class="relative">
+      <pre class="bg-slate-900 text-slate-300 p-6 rounded-xl text-sm overflow-x-auto font-mono"><code>@inproceedings{pereira2026finevau,
+  author    = {Pereira, Jo\~{a}o and Lopes, Vasco and Neves, Jo\~{a}o and Semedo, David},
+  title     = {FineVAU: A Novel Human-Aligned Benchmark for Fine-Grained Video Anomaly Understanding},
+  booktitle = {Proceedings of the AAAI Conference on Artificial Intelligence},
+  year      = {2026},
+}</code></pre>
+      <button onclick="copyBibtex()" class="absolute top-3 right-3 px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs rounded-lg transition">Copy</button>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="border-t border-slate-200 py-8 px-4">
+  <div class="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+    <p class="text-sm text-slate-400">&copy; 2026 FineVAU Authors</p>
+    <div class="flex gap-4">
+      <a href="https://arxiv.org/abs/2601.17258" class="text-slate-400 hover:text-slate-600 transition"><i class="ai ai-arxiv text-lg"></i></a>
+      <a href="https://huggingface.co/datasets/jaca-pereira/FineW3" class="text-slate-400 hover:text-slate-600 transition">
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4z" clip-rule="evenodd"/></svg>
+      </a>
+    </div>
+  </div>
+</footer>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     JAVASCRIPT
+     ═══════════════════════════════════════════════════════════════════ -->
+<script>
+// Mobile menu
+document.getElementById('mobile-menu-btn').addEventListener('click', () => {
+  document.getElementById('mobile-menu').classList.toggle('hidden');
+});
+
+// ─── Nav scroll spy ───
+const navLinks = document.querySelectorAll('nav a[href^="#"]');
+const sections = document.querySelectorAll('section[id]');
+
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      navLinks.forEach(link => {
+        if (link.getAttribute('href') === '#' + entry.target.id) {
+          link.classList.add('text-blue-600', 'font-medium');
+          link.classList.remove('text-slate-600');
+        } else {
+          link.classList.remove('text-blue-600', 'font-medium');
+          link.classList.add('text-slate-600');
+        }
+      });
+    }
+  });
+}, { rootMargin: '-20% 0px -60% 0px' });
+
+sections.forEach(section => observer.observe(section));
+
+
+// ─── Dataset Carousel with Timeline ───
+const datasetClips = [
+  {
+    video: './static/videos/Shoplifting018_x264.mp4',
+    title: 'Shoplifting',
+    difficulty: 'Easy',
+    duration: 71.16,
+    events: [
+      { start: 2.2, end: 12.3, type: 'Abnormal', desc: 'A man in a light-colored striped shirt and a woman in a patterned dress enter the supermarket aisle. The woman stops at the right-side shelf and begins to take multiple items, concealing them in her clothing.' },
+      { start: 12.4, end: 16.9, type: 'Normal', desc: 'The man in the striped shirt picks up a bottle from the left-side shelf, inspects it, and places it back.' },
+      { start: 17.0, end: 31.9, type: 'Abnormal', desc: 'The woman continues to take multiple items from the right-side shelf and conceal them within her clothing. She then walks towards the man.' },
+      { start: 32.0, end: 46.9, type: 'Abnormal', desc: 'The woman moves to the left-side shelf, where she continues to take additional items and conceal them in her clothing. The man picks up the small child in pink.' },
+      { start: 47.0, end: 70.6, type: 'Abnormal', desc: 'The man puts the child down. He moves to the right-side shelf and begins concealing items in his clothing, while the woman continues from the left shelf. Both exit the aisle with the child.' }
+    ]
+  },
+  {
+    video: './static/videos/Arrest001_x264.mp4',
+    title: 'Arrest',
+    difficulty: 'Easy',
+    duration: 79.17,
+    events: [
+      { start: 0.0, end: 15.0, type: 'Normal', desc: 'Office environment with multiple individuals visible near the bright entrance and windows.' },
+      { start: 15.0, end: 21.4, type: 'Normal', desc: 'A man wearing a black jacket and light-colored pants walks from the left towards the back office counter.' },
+      { start: 21.4, end: 30.9, type: 'Normal', desc: 'A man in a grey hoodie approaches the counter. Another man in a dark jacket is already behind the counter.' },
+      { start: 30.9, end: 35.6, type: 'Abnormal', desc: 'The man in the black jacket, along with the man in the dark jacket, physically restrain the man in the grey hoodie, initiating a struggle.' },
+      { start: 35.6, end: 40.4, type: 'Abnormal', desc: 'The man in the grey hoodie is forcibly moved and held behind the counter by the two men.' },
+      { start: 40.4, end: 44.3, type: 'Normal', desc: 'The man in the black jacket points towards the man in the grey hoodie, who remains behind the counter.' },
+      { start: 44.3, end: 79.0, type: 'Normal', desc: 'The man in the grey hoodie stands relatively still behind the counter. The man in black exits the frame.' }
+    ]
+  },
+  {
+    video: './static/videos/Robbery088_x264.mp4',
+    title: 'Robbery',
+    difficulty: 'Hard',
+    duration: 157.64,
+    events: [
+      { start: 5.7, end: 14.6, type: 'Abnormal', desc: 'A person in a dark hooded jacket climbs over a tall metal gate, then walks towards a small shop entrance.' },
+      { start: 18.5, end: 22.8, type: 'Abnormal', desc: 'The hooded person opens the small shop entrance door and enters.' },
+      { start: 22.8, end: 36.8, type: 'Abnormal', desc: 'A shopkeeper in a blue shirt emerges and immediately engages in a physical struggle with the robber.' },
+      { start: 36.8, end: 52.4, type: 'Abnormal', desc: 'The shopkeeper pushes the robber away from the entrance. The robber pulls out a knife.' },
+      { start: 52.4, end: 68.6, type: 'Abnormal', desc: 'The robber holds the knife while the shopkeeper holds onto him tightly, trying to disarm him.' },
+      { start: 68.6, end: 84.2, type: 'Abnormal', desc: 'The shopkeeper pulls the robber further in. The robber retaliates by stabbing the shopkeeper multiple times.' },
+      { start: 84.2, end: 107.5, type: 'Abnormal', desc: 'Despite being stabbed, the shopkeeper continues to struggle. The robber strikes his head with the knife handle.' },
+      { start: 107.5, end: 119.2, type: 'Abnormal', desc: 'The robber briefly enters the shop but is pulled back. The shopkeeper grabs a green baseball bat.' },
+      { start: 119.2, end: 131.7, type: 'Abnormal', desc: 'Armed with the bat, the shopkeeper swings at the robber, who attempts to flee by climbing the gate.' },
+      { start: 129.7, end: 145.5, type: 'Abnormal', desc: 'The shopkeeper strikes the robber on the gate, causing him to fall. The robber gets up and runs away.' },
+      { start: 145.5, end: 151.4, type: 'Normal', desc: 'The shopkeeper returns, closes the gate, and checks himself for injuries.' }
+    ]
+  },
+  {
+    video: './static/videos/Robbery001_x264.mp4',
+    title: 'Armed Robbery',
+    difficulty: 'Hard',
+    duration: 33.04,
+    events: [
+      { start: 0.0, end: 5.3, type: 'Normal', desc: 'A person in a white motorcycle helmet stands in front of the store counter, looking around.' },
+      { start: 5.3, end: 10.3, type: 'Normal', desc: 'The person continues to survey the area. A store employee in a dark blue shirt walks towards the counter.' },
+      { start: 10.3, end: 15.6, type: 'Normal', desc: 'The store employee approaches and stands behind the counter, facing the helmeted person.' },
+      { start: 15.6, end: 18.2, type: 'Abnormal', desc: 'A second assailant in an orange helmet quickly enters, draws a long silver knife/machete and points it at the employee.' },
+      { start: 18.2, end: 20.7, type: 'Abnormal', desc: 'The assailant holds the knife and makes demanding gestures toward the employee, signaling a robbery.' },
+      { start: 20.7, end: 23.1, type: 'Abnormal', desc: 'The employee reaches under the counter and retrieves a larger machete, raising it defensively. Both assailants recoil.' },
+      { start: 23.1, end: 26.0, type: 'Abnormal', desc: 'Upon seeing the larger blade, the assailant in the orange helmet turns and flees. The white-helmeted person follows.' },
+      { start: 26.0, end: 29.9, type: 'Abnormal', desc: 'The store employee, holding the machete, pursues the two fleeing individuals out of frame.' },
+      { start: 29.9, end: 33.0, type: 'Normal', desc: 'The counter area is now empty with no individuals present.' }
+    ]
+  },
+  {
+    video: './static/videos/Assault004_x264.mp4',
+    title: 'Assault',
+    difficulty: 'Hard',
+    duration: 107.43,
+    events: [
+      { start: 0.0, end: 24.0, type: 'Normal', desc: 'Four men gathered on the sidewalk at night. A silver car approaches slowly, causing them to look towards it.' },
+      { start: 24.0, end: 26.0, type: 'Abnormal', desc: 'The silver car stops abruptly. Three assailants in balaclavas exit and attack the man in white with a machete.' },
+      { start: 26.0, end: 28.5, type: 'Abnormal', desc: 'The assailant continues to slash at the man in white who is on the ground. Another assailant approaches.' },
+      { start: 28.5, end: 36.0, type: 'Abnormal', desc: 'A second car arrives. More assailants exit and pursue the man in black, catching him and slashing with a machete.' },
+      { start: 36.0, end: 55.0, type: 'Abnormal', desc: 'Multiple assailants relentlessly slash at both victims on the ground. Both attempt to stand but are attacked again.' },
+      { start: 55.0, end: 75.0, type: 'Abnormal', desc: 'The victims attempt to rise repeatedly but are forced back down. The assailants continue their attack.' },
+      { start: 75.0, end: 90.0, type: 'Abnormal', desc: 'The assailants retreat to their cars and rapidly drive away from the scene.' },
+      { start: 90.0, end: 107.4, type: 'Abnormal', desc: 'The man in white slowly sits up, visibly injured. Both victims remain motionless on the ground.' }
+    ]
+  }
+];
+
+let currentClipIdx = 0;
+let timelineRAF = null;
+
+function selectDatasetClip(idx) {
+  currentClipIdx = idx;
+  document.querySelectorAll('[id^="clip-btn-"]').forEach((btn, i) => {
+    if (i === idx) {
+      btn.classList.remove('border-transparent');
+      btn.classList.add('border-blue-500', 'shadow-lg');
+    } else {
+      btn.classList.remove('border-blue-500', 'shadow-lg');
+      btn.classList.add('border-transparent');
+    }
+  });
+
+  const clip = datasetClips[idx];
+  const video = document.getElementById('dataset-main-video');
+  video.src = clip.video;
+  video.load();
+  video.play();
+
+  renderTimeline(clip);
+  renderAnnotations(clip);
+  startTimelineSync();
+}
+
+function renderTimeline(clip) {
+  const bar = document.getElementById('timeline-bar');
+  const dur = clip.duration;
+  bar.innerHTML = clip.events.map((e, i) => {
+    const left = (e.start / dur) * 100;
+    const width = ((e.end - e.start) / dur) * 100;
+    const color = e.type === 'Abnormal' ? 'bg-red-400' : 'bg-slate-300';
+    return `<div class="absolute top-0 h-full ${color} transition-opacity" style="left:${left}%;width:${width}%" data-event-idx="${i}"></div>`;
+  }).join('') + `<div id="timeline-playhead" class="absolute top-0 h-full w-0.5 bg-blue-600 z-10" style="left:0%"></div>`;
+  document.getElementById('timeline-duration').textContent = formatTime(dur);
+}
+
+function renderAnnotations(clip) {
+  const diffColor = clip.difficulty === 'Easy' ? 'green' : clip.difficulty === 'Medium' ? 'orange' : 'red';
+  const container = document.getElementById('dataset-annotations');
+  container.innerHTML = `
+    <div class="flex items-center gap-3 mb-1">
+      <h3 class="text-xl font-bold text-slate-900">${clip.title}</h3>
+      <span class="badge bg-${diffColor}-100 text-${diffColor}-700">${clip.difficulty}</span>
+      <span class="text-xs text-slate-400">${clip.events.length} annotated events</span>
+    </div>
+    <div class="space-y-2">
+      ${clip.events.map((e, i) => `
+        <div id="event-card-${i}" class="event-card p-3 rounded-lg border border-slate-200 cursor-pointer transition-all hover:border-blue-300" onclick="seekToEvent(${i})">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="badge ${e.type === 'Abnormal' ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-600'}">${e.type}</span>
+            <span class="text-[0.65rem] text-slate-400 font-mono">${formatTime(e.start)} &ndash; ${formatTime(e.end)}</span>
+          </div>
+          <p class="text-sm text-slate-700 leading-snug">${e.desc}</p>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function startTimelineSync() {
+  if (timelineRAF) cancelAnimationFrame(timelineRAF);
+  const video = document.getElementById('dataset-main-video');
+  const overlay = document.getElementById('video-event-overlay');
+  const overlayText = document.getElementById('overlay-event-text');
+  const overlayBadge = document.getElementById('overlay-type-badge');
+  const playhead = document.getElementById('timeline-playhead');
+  const timeDisplay = document.getElementById('timeline-current');
+
+  let lastActiveIdx = -1;
+
+  function sync() {
+    const clip = datasetClips[currentClipIdx];
+    const t = video.currentTime;
+    const pct = (t / clip.duration) * 100;
+
+    if (playhead) playhead.style.left = pct + '%';
+    if (timeDisplay) timeDisplay.textContent = formatTime(t);
+
+    let activeIdx = -1;
+    for (let i = 0; i < clip.events.length; i++) {
+      if (t >= clip.events[i].start && t <= clip.events[i].end) {
+        activeIdx = i;
+        break;
+      }
+    }
+
+    if (activeIdx !== lastActiveIdx) {
+      const container = document.getElementById('dataset-annotations');
+      document.querySelectorAll('.event-card').forEach((card, i) => {
+        if (i === activeIdx) {
+          card.classList.add('border-blue-500', 'bg-blue-50', 'shadow-sm');
+          card.classList.remove('border-slate-200');
+          const cardTop = card.offsetTop - container.offsetTop;
+          container.scrollTo({ top: cardTop - 40, behavior: 'smooth' });
+        } else {
+          card.classList.remove('border-blue-500', 'bg-blue-50', 'shadow-sm');
+          card.classList.add('border-slate-200');
+        }
+      });
+
+      if (activeIdx >= 0) {
+        const ev = clip.events[activeIdx];
+        overlayText.textContent = ev.desc.length > 120 ? ev.desc.slice(0, 120) + '...' : ev.desc;
+        overlayBadge.textContent = ev.type.toUpperCase();
+        overlayBadge.className = `badge text-white text-[0.6rem] ${ev.type === 'Abnormal' ? 'bg-red-500' : 'bg-slate-500'}`;
+        overlay.classList.remove('opacity-0');
+        overlay.classList.add('opacity-100');
+      } else {
+        overlay.classList.remove('opacity-100');
+        overlay.classList.add('opacity-0');
+      }
+      lastActiveIdx = activeIdx;
+    }
+
+    timelineRAF = requestAnimationFrame(sync);
+  }
+  sync();
+}
+
+function seekToEvent(idx) {
+  const clip = datasetClips[currentClipIdx];
+  const video = document.getElementById('dataset-main-video');
+  video.currentTime = clip.events[idx].start;
+  video.play();
+}
+
+function seekTimeline(e) {
+  const bar = document.getElementById('timeline-bar');
+  const rect = bar.getBoundingClientRect();
+  const pct = (e.clientX - rect.left) / rect.width;
+  const clip = datasetClips[currentClipIdx];
+  const video = document.getElementById('dataset-main-video');
+  video.currentTime = pct * clip.duration;
+  video.play();
+}
+
+function formatTime(s) {
+  const m = Math.floor(s / 60);
+  const sec = Math.floor(s % 60);
+  return m + ':' + sec.toString().padStart(2, '0');
+}
+
+selectDatasetClip(0);
+
+// ─── Leaderboard ───
+const leaderboardData = [
+  { rank: 1, model: 'InternVL3', all: 40.5, event: 18.0, entity: 51.2, location: 71.8, attribute: 25.5,
+    failure: { clip: 'Shoplifting018', issue: 'Hallucinated a security guard confrontation that never occurred. Correctly identified the retail setting but invented a non-existent interaction where the woman was "stopped by store personnel." The subtle concealment actions (hiding items in clothing) were described as "browsing merchandise." Failed to identify the child as a distraction element.', missed: ['Concealment actions', 'Child as distraction', 'Multiple theft instances'] }
+  },
+  { rank: 2, model: 'LLaVA-VID', all: 35.0, event: 14.4, entity: 44.0, location: 65.7, attribute: 21.0,
+    failure: { clip: 'Robbery088', issue: 'Correctly identified the residential setting and two participants but described the violent stabbing as "a disagreement between neighbors." Failed to identify any weapons despite the knife and iron rod being clearly visible in multiple frames. Temporal ordering of events was partially correct but missed the wall-climbing entry entirely.', missed: ['Weapons (knife, iron rod)', 'Wall climbing entry', 'Severity of violence'] }
+  },
+  { rank: 3, model: 'Qwen2.5-VL', all: 32.9, event: 9.1, entity: 38.3, location: 70.8, attribute: 20.3,
+    failure: { clip: 'Arrest001', issue: 'Strong location understanding (identified indoor room, door, table) but catastrophically failed on event detection. Described the forced arrest as "people having a meeting that becomes animated." Completely missed the physical subduing, dragging, and the use of a pager for communication. Identified people but assigned no roles.', missed: ['Forced subduing/arrest', 'Role assignment', 'Pager communication'] }
+  },
+  { rank: 4, model: 'LLaVA-OV', all: 32.2, event: 13.0, entity: 41.1, location: 58.3, attribute: 19.9,
+    failure: { clip: 'Explosion002', issue: 'Detected "some kind of incident on a road" but failed to identify it as an explosion. Described smoke as "dust from construction" and missed the swerving vehicles entirely. The temporal understanding was poor: placed the explosion after vehicles stopped rather than before. Location described as "highway" rather than urban intersection.', missed: ['Explosion identification', 'Vehicle reactions', 'Correct temporal ordering'] }
+  },
+  { rank: 5, model: 'VideoLLaMA3', all: 19.3, event: 6.5, entity: 24.3, location: 40.3, attribute: 10.2,
+    failure: { clip: 'Fighting002', issue: 'Described the scene as "people socializing outdoors" despite clear physical violence. Completely failed to identify any aggressive behavior, falling, or crowd intervention. Generated a hallucinated narrative about "friends greeting each other energetically." Location was vaguely correct (outdoor area) but missed all contextual detail.', missed: ['All violent actions', 'Crowd intervention', 'Fallen individual', 'Correct scene interpretation'] }
+  }
+];
+
+function renderLeaderboard() {
+  const tbody = document.getElementById('leaderboard-body');
+  tbody.innerHTML = leaderboardData.map((row, i) => {
+    const barWidth = (row.all / 50) * 100;
+    return `
+      <tr class="border-b border-slate-100 hover:bg-slate-50 cursor-pointer transition" onclick="toggleAccordion(${i})">
+        <td class="px-4 py-4 text-slate-400 font-mono text-xs">${row.rank}</td>
+        <td class="px-4 py-4 font-semibold text-slate-900">${row.model}</td>
+        <td class="px-4 py-4 text-center">
+          <span class="font-bold text-blue-700">${row.all}</span>
+          <div class="mt-1 w-full bg-slate-100 rounded-full h-1"><div class="h-1 rounded-full bg-blue-500" style="width:${barWidth}%"></div></div>
+        </td>
+        <td class="px-4 py-4 text-center text-slate-700">${row.event}</td>
+        <td class="px-4 py-4 text-center text-slate-700">${row.entity}</td>
+        <td class="px-4 py-4 text-center text-slate-700">${row.location}</td>
+        <td class="px-4 py-4 text-center text-slate-700">${row.attribute}</td>
+        <td class="px-4 py-4 text-center"><svg class="w-4 h-4 text-slate-400 transform transition accordion-chevron-${i}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg></td>
+      </tr>
+      <tr class="border-b border-slate-100" id="accordion-row-${i}">
+        <td colspan="8" class="p-0">
+          <div class="accordion-content" id="accordion-${i}">
+            <div class="px-6 py-5 bg-slate-50 border-t border-slate-100">
+              <div class="flex items-start gap-4">
+                <div class="flex-1">
+                  <div class="flex items-center gap-2 mb-2">
+                    <span class="badge bg-red-100 text-red-700">Failure Case</span>
+                    <span class="text-xs text-slate-500">Clip: ${row.failure.clip}</span>
+                  </div>
+                  <p class="text-sm text-slate-700 mb-3">${row.failure.issue}</p>
+                  <div class="flex flex-wrap gap-1.5">
+                    ${row.failure.missed.map(m => `<span class="px-2 py-0.5 bg-red-50 text-red-700 text-xs rounded-full border border-red-100">${m}</span>`).join('')}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function toggleAccordion(idx) {
+  const content = document.getElementById(`accordion-${idx}`);
+  const chevron = document.querySelector(`.accordion-chevron-${idx}`);
+  content.classList.toggle('open');
+  if (content.classList.contains('open')) {
+    chevron.style.transform = 'rotate(180deg)';
+  } else {
+    chevron.style.transform = 'rotate(0deg)';
+  }
+}
+
+// Sorting
+let currentSort = { col: 'all', dir: 'desc' };
+
+document.querySelectorAll('#leaderboard-table th.sortable').forEach(th => {
+  th.addEventListener('click', () => {
+    const col = th.dataset.col;
+    if (currentSort.col === col) {
+      currentSort.dir = currentSort.dir === 'desc' ? 'asc' : 'desc';
+    } else {
+      currentSort = { col, dir: 'desc' };
+    }
+    leaderboardData.sort((a, b) => {
+      const diff = b[col] - a[col];
+      return currentSort.dir === 'desc' ? diff : -diff;
+    });
+    leaderboardData.forEach((row, i) => row.rank = i + 1);
+    renderLeaderboard();
+
+    document.querySelectorAll('#leaderboard-table th.sortable').forEach(h => h.classList.remove('sort-active'));
+    th.classList.add('sort-active');
+    th.querySelector('.sort-arrow').innerHTML = currentSort.dir === 'desc' ? '&#9660;' : '&#9650;';
+  });
+});
+
+renderLeaderboard();
+
+// ─── BibTeX Copy ───
+function copyBibtex() {
+  const bibtex = `@inproceedings{pereira2026finevau,
+  author    = {Pereira, Jo\\~{a}o and Lopes, Vasco and Neves, Jo\\~{a}o and Semedo, David},
+  title     = {FineVAU: A Novel Human-Aligned Benchmark for Fine-Grained Video Anomaly Understanding},
+  booktitle = {Proceedings of the AAAI Conference on Artificial Intelligence},
+  year      = {2026},
+}`;
+  navigator.clipboard.writeText(bibtex);
+  event.target.textContent = 'Copied!';
+  setTimeout(() => { event.target.textContent = 'Copy'; }, 2000);
+}
+
+// ─── Autoplay carousel videos on hover ───
+document.querySelectorAll('.carousel-item video').forEach(v => {
+  v.closest('button').addEventListener('mouseenter', () => v.play());
+  v.closest('button').addEventListener('mouseleave', () => { v.pause(); v.currentTime = 0; });
+});
+</script>
+
+</body>
+</html>
